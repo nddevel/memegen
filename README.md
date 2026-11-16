@@ -10,6 +10,7 @@ A tiny native Windows meme generator. Load an image, type your top and bottom te
 - **Export**: save as PNG or JPG, or copy straight to the clipboard to paste into Discord, Telegram, etc.
 - **Multi-line captions**: press Enter in a text box to force a line break
 - Phone photos are rotated correctly (EXIF orientation)
+- Dark mode: follows your Windows light/dark app setting, including the title bar
 - Single portable `.exe`, no install needed
 
 ## Download
