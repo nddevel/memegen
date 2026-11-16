@@ -14,11 +14,13 @@ sealed class MainForm : Form
     readonly Button copyButton;
     readonly System.Windows.Forms.Timer renderTimer;
 
+    public event Action<MainForm, ThemeChoice>? ThemeChangeRequested;
+
     Image? source;
     Bitmap? rendered;
     string? sourcePath;
 
-    public MainForm(string? initialPath)
+    public MainForm(ThemeChoice theme, string? initialPath, SavedWindow? state)
     {
         Text = "Meme Generator";
         ClientSize = new Size(1100, 700);
@@ -44,6 +46,20 @@ sealed class MainForm : Form
         saveButton = MakeButton("Save as…  (Ctrl+S)", (_, _) => SaveWithDialog());
         copyButton = MakeButton("Copy to clipboard  (Ctrl+Shift+C)", (_, _) => CopyToClipboard());
         var clearButton = MakeButton("Clear text", (_, _) => { topBox.Clear(); bottomBox.Clear(); });
+        var themeBox = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Dock = DockStyle.Fill,
+            Margin = new Padding(3, 4, 3, 4),
+        };
+        themeBox.Items.AddRange(Enum.GetValues<ThemeChoice>().Cast<object>().ToArray());
+        themeBox.SelectedItem = theme;
+        themeBox.SelectedIndexChanged += (_, _) =>
+        {
+            // Defer so the combo box finishes its own event before this window is replaced.
+            if (themeBox.SelectedItem is ThemeChoice t && t != theme)
+                BeginInvoke(() => ThemeChangeRequested?.Invoke(this, t));
+        };
 
         side.Controls.Add(openButton);
         side.Controls.Add(MakeLabel("Top text"));
@@ -54,6 +70,8 @@ sealed class MainForm : Form
         side.Controls.Add(new Label { Height = 12 });
         side.Controls.Add(saveButton);
         side.Controls.Add(copyButton);
+        side.Controls.Add(MakeLabel("Theme"));
+        side.Controls.Add(themeBox);
         side.Controls.Add(new Label
         {
             Text = "Tip: drag an image onto the window or paste one with Ctrl+V.",
@@ -92,8 +110,40 @@ sealed class MainForm : Form
         bottomBox.TextChanged += (_, _) => ScheduleRender();
 
         UpdateButtons();
-        if (!string.IsNullOrEmpty(initialPath) && File.Exists(initialPath))
+        if (state is not null)
+            RestoreState(state);
+        else if (!string.IsNullOrEmpty(initialPath) && File.Exists(initialPath))
             Shown += (_, _) => LoadFromFile(initialPath);
+    }
+
+    // ---------- theme switch support ----------
+
+    /// <summary>Hands the current image and text to a new window. This form gives up ownership of the image.</summary>
+    public SavedWindow DetachState()
+    {
+        renderTimer.Stop();
+        var state = new SavedWindow
+        {
+            Source = source,
+            SourcePath = sourcePath,
+            TopText = topBox.Text,
+            BottomText = bottomBox.Text,
+            Bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds,
+            FormState = WindowState == FormWindowState.Minimized ? FormWindowState.Normal : WindowState,
+        };
+        source = null;
+        return state;
+    }
+
+    void RestoreState(SavedWindow state)
+    {
+        StartPosition = FormStartPosition.Manual;
+        Bounds = state.Bounds;
+        WindowState = state.FormState;
+        topBox.Text = state.TopText;
+        bottomBox.Text = state.BottomText;
+        if (state.Source is not null)
+            SetSource(state.Source, state.SourcePath);
     }
 
     // ---------- UI helpers ----------
