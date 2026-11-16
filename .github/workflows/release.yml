@@ -1,0 +1,76 @@
+name: Build & release
+
+# Push a tag like v1.3.0 to build, sign (once SignPath is configured) and publish a release.
+# Run manually from the Actions tab to just build and check the output.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      SIGNING_ENABLED: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Work out version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then v="${GITHUB_REF_NAME#v}"; else v="0.0.0"; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - name: Publish single-file exe
+        run: >
+          dotnet publish -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true -p:DebugType=none
+          -p:Version=${{ steps.version.outputs.version }} -o dist
+
+      - name: Upload unsigned exe
+        id: upload-unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: MemeGen-unsigned
+          path: dist/MemeGen.exe
+
+      - name: Sign with SignPath
+        if: env.SIGNING_ENABLED == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'memegen' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          # Each release needs a manual approval in SignPath; give yourself an hour to click it.
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed
+
+      - name: Use signed exe
+        if: env.SIGNING_ENABLED == 'true'
+        shell: bash
+        run: cp signed/MemeGen.exe dist/MemeGen.exe
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="Download \`MemeGen.exe\` and run it, no install needed (Windows 10/11 x64).
+
+          [Code signing policy](https://github.com/${GITHUB_REPOSITORY}#code-signing-policy)"
+          gh release create "$GITHUB_REF_NAME" dist/MemeGen.exe \
+            --title "MemeGen $GITHUB_REF_NAME" --notes "$notes" --generate-notes

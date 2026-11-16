@@ -9,5 +9,12 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AssemblyName>MemeGen</AssemblyName>
     <RootNamespace>MemeGen</RootNamespace>
+
+    <!-- File metadata shown in Windows Properties; SignPath checks Product and Version. -->
+    <Product>MemeGen</Product>
+    <AssemblyTitle>MemeGen</AssemblyTitle>
+    <Description>Native Windows meme generator</Description>
+    <Copyright>Copyright (c) 2026 nddevel</Copyright>
+    <Version>1.2.0</Version>
   </PropertyGroup>
 </Project>

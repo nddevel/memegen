@@ -15,7 +15,9 @@ A tiny native Windows meme generator. Load an image, type your top and bottom te
 
 ## Download
 
-Get `MemeGen.exe` from the [Releases](../../releases) page and run it. It needs Windows 10 or 11 (x64).
+Get `MemeGen.exe` from the [Releases](../../releases) page and run it. It needs Windows 10 or 11 (x64). Releases are built from this repository by [GitHub Actions](.github/workflows/release.yml); see the [code signing policy](#code-signing-policy).
+
+If Windows shows **"Windows protected your PC"**, click **More info → Run anyway**. That warning appears for new apps that haven't built up a download history with Microsoft yet.
 
 ## Keyboard shortcuts
 
@@ -40,3 +42,22 @@ The executable ends up in `dist/MemeGen.exe`.
 ## How it works
 
 It's a WinForms app. `MemeRenderer.cs` turns the caption into a GDI+ `GraphicsPath` using the Impact font, then strokes it in black and fills it in white. The font size starts large and steps down until the wrapped text fits within the image width and takes up at most 30% of its height. `MainForm.cs` contains the UI.
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
+- Committers and reviewers: [nddevel](https://github.com/nddevel)
+- Approvers: [nddevel](https://github.com/nddevel)
+
+Release binaries are built from the source in this repository by GitHub Actions, and each release is manually approved before signing.
+
+## Privacy
+
+This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
+
+MemeGen works entirely offline. Apart from the images you save, the only file it writes is your theme choice, stored in `%APPDATA%\MemeGen\theme.txt`.
+
+## License
+
+[MIT](LICENSE)
