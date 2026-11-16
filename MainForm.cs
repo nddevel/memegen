@@ -28,6 +28,9 @@ sealed class MainForm : Form
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 10f);
         AllowDrop = true;
+        // Use the icon embedded in the exe for the title bar and taskbar.
+        if (Environment.ProcessPath is { } exe)
+            Icon = Icon.ExtractAssociatedIcon(exe);
 
         // --- side panel ---
         var side = new TableLayoutPanel

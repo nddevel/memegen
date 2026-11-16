@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" alt="MemeGen logo" width="160"></p>
+
 # MemeGen
 
 A tiny native Windows meme generator. Load an image, type your top and bottom text, and get the classic meme look: white Impact text with a thick black outline.
@@ -57,6 +59,10 @@ Release binaries are built from the source in this repository by GitHub Actions,
 This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
 
 MemeGen works entirely offline. Apart from the images you save, the only file it writes is your theme choice, stored in `%APPDATA%\MemeGen\theme.txt`.
+
+## Credits
+
+Logo by [httpfrshlyrttn](https://github.com/httpfrshlyrttn).
 
 ## License
 
